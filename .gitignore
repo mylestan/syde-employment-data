@@ -1,3 +1,8 @@
+# Mine #
+########
+log.txt
+*.pyc
+
 # Compiled source #
 ###################
 *.com
