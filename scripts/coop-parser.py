@@ -1,12 +1,14 @@
 # imports
+import config
 import simplejson as json
 from urllib2 import urlopen, URLError
 from datetime import datetime
 import csv
 import hashlib
+import glob
 
 # Open log
-log = open("log.txt", 'w')
+log = open("../logs/log.txt", 'w')
 
 # methods
 # logging function that writes to a log file and optionally to console
@@ -64,40 +66,14 @@ def getLocation(city, prov, country, company = None):
 
 
 # vars
-url = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s&sensor=false&key=AIzaSyB0Ov2yUS0UKwn1gZZQHpkqCMh4n_iRhtk'
+url = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s&sensor=false&key=' + config.googleApiKey
 
 fileNames = []
-
-# 2014
-fileNames.append("Systems Design Engineering Class of 2014 - Employment - Winter 2010 (1A).csv")
-fileNames.append("Systems Design Engineering Class of 2014 - Employment - Fall 2012 (3A).csv")
-fileNames.append("Systems Design Engineering Class of 2014 - Employment - Summer 2011 (2A).csv")
-fileNames.append("Systems Design Engineering Class of 2014 - Employment - Summer 2013 (3B).csv")
-fileNames.append("Systems Design Engineering Class of 2014 - Employment - Winter 2010 (1A).csv")
-fileNames.append("Systems Design Engineering Class of 2014 - Employment - Winter 2012 (2B).csv")
-
-# 2015
-fileNames.append("Systems Design Engineering Class of 2015 - Employment - %231 (1A, Winter 2011).csv")
-fileNames.append("Systems Design Engineering Class of 2015 - Employment - %232 (1B, Fall 2011).csv")
-fileNames.append("Systems Design Engineering Class of 2015 - Employment - %233 (2A, Summer 2012).csv")
-fileNames.append("Systems Design Engineering Class of 2015 - Employment - %234 (2B, Winter 2013).csv")
-fileNames.append("Systems Design Engineering Class of 2015 - Employment - %235 (3A, Fall 2013).csv")
-
-# 2016
-fileNames.append("Systems Design Engineering Class of 2016 - Employment - %231 (1A, Winter 2012).csv")
-fileNames.append("Systems Design Engineering Class of 2016 - Employment - %232 (1B, Fall 2012).csv")
-fileNames.append("Systems Design Engineering Class of 2016 - Employment - %233 (2A, Summer 2013).csv")
-fileNames.append("Systems Design Engineering Class of 2016 - Employment - %234 (2B, Winter 2014).csv")
-
-# 2017
-fileNames.append("Systems Design Engineering Class of 2017 - Employment - %231 (1A, Winter 2013).csv")
-fileNames.append("Systems Design Engineering Class of 2017 - Employment - %232 (1B, Fall 2013).csv")
-
-# 2018
-fileNames.append("Systems Design Engineering Class of 2018 - Employment - %231 (1A, Winter 2014).csv")
+for fname in glob.glob("/Users/mylestan/Git/syde-employment-data/raw/*.csv"):
+	fileNames.append(fname)
 
 # Read the result data into an object
-with open('coop-profiles.txt') as pf:
+with open('../data/coop-profiles.txt') as pf:
 	profiles = json.loads(pf.read())
 	if not profiles:
 		profiles = {}
