@@ -7,66 +7,15 @@ import csv
 import hashlib
 import glob
 
-# Open log
-log = open("../logs/log.txt", 'w')
+import gmaps
+gmaps.setApiKey(config.googleApiKey)
 
-# methods
-# logging function that writes to a log file and optionally to console
-def rec(msg, printInConsole = False):
-	log.write(msg)
-	if printInConsole:
-		print msg
+import linkedin
+linkedin.setApiKey(config.linkedInKey)
+linkedin.login()
 
-# function which handles map requests for the given string, and returns the object
-def mapsRequest(string):
-	rec('gmaps request for string: ' + string + '\n')
-	request = url % string.replace(' ', '+')
-	rec('request string: ' + request + '\n')
-
-	try:
-		response = urlopen(request)
-	except URLError, e:
-		rec('URL request failed. Reason: ' + e.reason)
-	else:
-		return json.load(response)
-
-# function to return the map-location object for a co-op term, given the company and the location. keep this logic out of the main loop
-def getLocation(city, prov, country, company = None):
-	rec('getting map location\n')
-	if company:
-		rec('\tcompany: ' + company + '\n')
-	rec ('\tlocation: ' + ', '.join([city,prov,country]) + '\n')
-
-	# First we try to locate the company in the area
-	reqString = ', '.join([company, city, prov, country]) if company else ', '.join([city, prov, country])
-	response = mapsRequest(reqString)
-
-	status = response['status']
-	if status == 'OK':
-		rec('\tresponse OK\n')
-		# Take the first one. FAITH IN THE GOOGLES!
-		first = response['results'][0]
-		location = {}
-		location['name'] = first['name']
-		location['address'] = first['formatted_address']
-		location['lat'] = first['geometry']['location']['lat']
-		location['lng'] = first['geometry']['location']['lng']
-		return location
-	elif status == "ZERO_RESULTS":
-		if company:
-			rec('\tresponse no results, trying again for location\n')
-			return getLocation(city, prov, country)
-		else:
-			rec('\tresponse no results, and no company provided. returning none. Review this entry.\n')
-			return None
-	else:
-		rec('\tresponse error: ' + status + '\n')
-		return None
-
-
-
-# vars
-url = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s&sensor=false&key=' + config.googleApiKey
+import log
+log.setPath("../logs/coop-parser-log.txt")
 
 fileNames = []
 for fname in glob.glob("/Users/mylestan/Git/syde-employment-data/raw/*.csv"):
@@ -85,11 +34,11 @@ pfwriter = csv.writer(pfcsv, delimiter = ",", quotechar = '"', quoting = csv.QUO
 # THE FUN BEGINS HERE!!!
 # Iterate through the co-op data files
 for f in range(len(fileNames)):
-	rec('reading file: ' + fileNames[f] + '\n', True)
+	log.rec('reading file: ' + fileNames[f] + '\n', True)
 	with open(fileNames[f]) as csvFile:
 		fileReader = csv.reader(csvFile)
 		# Read first line, and print to confirm that these match:
-		#cols = ['name', 'termNumber', 'isWorking', 'title', 'employer', 'jobPrevious', 'employerPrevious', 'latlng', 'city', 'province', 'country', 'typeOfWork', 'industry', 'sector']
+		# cols = ['name', 'termNumber', 'isWorking', 'title', 'employer', 'jobPrevious', 'employerPrevious', 'latlng', 'city', 'province', 'country', 'typeOfWork', 'industry', 'sector']
 
 		fileCols = fileReader.next() # First row is the titles: ignore
 		propertyCols = fileReader.next() # second row is the technical property names: use this to build the properties!
@@ -97,7 +46,7 @@ for f in range(len(fileNames)):
 
 		# Iterate through every line in the data file
 		for infoArray in fileReader:
-			rec('reading a new line\n')
+			log.rec('reading a new line\n')
 
 			# Read the row into a dict
 			row={}
@@ -119,17 +68,21 @@ for f in range(len(fileNames)):
 			if not termHash in profiles[nameHash]: # If term doesn't exist, make it
 				profiles[nameHash][termHash] = {}
 
-			# Write all the properties into an object.
-			for propertyKey in row: # Create or update all of the properties in the term
-				if propertyKey is not 'name': # We do not add their name to the list. PRIVACY!
-					profiles[nameHash][termHash][propertyKey] = row[propertyKey]
+			# We only write the properties we need!
+			transferKeys = ['name','classYear','year','term','termNumber','isWorking','title','employer','employerUrl','city','province','country','description','industry','sector']
+
+			for key in transferKeys:
+				if key in row:
+					profiles[nameHash][termHash][key] = row[key]
+				else:
+					profiles[nameHash][termHash][key] = None
 
 			if not 'mapLocation' in profiles[nameHash][termHash]: # if map-location doesn't exist, write it
-				location = getLocation(row['city'], row['province'], row['country'], row['employer'])
+				location = gmaps.getLocation(row['city'], row['province'], row['country'], row['employer'])
 				if location:
 					profiles[nameHash][termHash]['mapLocation'] = location
 				else:
-					rec('no location could be found for ' + row['name'] + '. Please resolve this row.\n')
+					log.rec('no location could be found for ' + row['name'] + '. Please resolve this row.\n')
 
 			if 'mapLocation' in profiles[nameHash][termHash]:
 				# write all of the important into into a the csv file as well - this is for trasferring into a database if you wanted.
@@ -152,11 +105,9 @@ for f in range(len(fileNames)):
 
 # Report some figures
 # Open result data file, write, Close
-pf = open('coop-profiles.txt', 'w')
+pf = open('../data/coop-profiles.txt', 'w')
 pf.write(json.dumps(profiles))
 pf.close()
 
 # close the csv
 pfcsv.close()
-
-log.close()
