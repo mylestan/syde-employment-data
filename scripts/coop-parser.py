@@ -28,8 +28,8 @@ with open('../data/coop-profiles.txt') as pf:
 		profiles = {}
 
 # Create a csv writer for putting the data into a csv
-pfcsv = open("coop-profiles.csv", "wb")
-pfwriter = csv.writer(pfcsv, delimiter = ",", quotechar = '"', quoting = csv.QUOTE_MINIMAL)
+# pfcsv = open("coop-profiles.csv", "wb")
+# pfwriter = csv.writer(pfcsv, delimiter = ",", quotechar = '"', quoting = csv.QUOTE_MINIMAL)
 
 # THE FUN BEGINS HERE!!!
 # Iterate through the co-op data files
@@ -37,8 +37,6 @@ for f in range(len(fileNames)):
 	log.rec('reading file: ' + fileNames[f] + '\n', True)
 	with open(fileNames[f]) as csvFile:
 		fileReader = csv.reader(csvFile)
-		# Read first line, and print to confirm that these match:
-		# cols = ['name', 'termNumber', 'isWorking', 'title', 'employer', 'jobPrevious', 'employerPrevious', 'latlng', 'city', 'province', 'country', 'typeOfWork', 'industry', 'sector']
 
 		fileCols = fileReader.next() # First row is the titles: ignore
 		propertyCols = fileReader.next() # second row is the technical property names: use this to build the properties!
@@ -77,37 +75,36 @@ for f in range(len(fileNames)):
 				else:
 					profiles[nameHash][termHash][key] = None
 
-			if not 'mapLocation' in profiles[nameHash][termHash]: # if map-location doesn't exist, write it
-				location = gmaps.getLocation(row['city'], row['province'], row['country'], row['employer'])
-				if location:
-					profiles[nameHash][termHash]['mapLocation'] = location
-				else:
-					log.rec('no location could be found for ' + row['name'] + '. Please resolve this row.\n')
+			# if not 'mapLocation' in profiles[nameHash][termHash]: # if map-location doesn't exist, write it
+			# 	location = gmaps.getLocation(row['city'], row['province'], row['country'], row['employer'])
+			# 	if location:
+			# 		profiles[nameHash][termHash]['mapLocation'] = location
+			# 	else:
+			# 		log.rec('no location could be found for ' + row['name'] + '. Please resolve this row.\n')
 
-			if 'mapLocation' in profiles[nameHash][termHash]:
-				# write all of the important into into a the csv file as well - this is for trasferring into a database if you wanted.
-				p = profiles[nameHash][termHash] # for ease
-				# calculate the iso date time format
-				if p['term'] == 'winter':
-					m = 1
-				elif p['term'] == 'summer':
-					m = 5
-				else:
-					m = 9
-				isoDateTime = datetime(int(p['year']), m, 1).isoformat("T") + "+00:00"
-				pString = [nameHash, termHash, p['classYear'], isoDateTime, p['termNumber'], p['mapLocation']['lat'], p['mapLocation']['lng'], p['title'], p['employer'], p['employerUrl'], p['city'], p['province'], p['country'], p['industry'], p['description']]
-				pfwriter.writerow(pString)
+			# if 'mapLocation' in profiles[nameHash][termHash]:
+			# 	# write all of the important into into a the csv file as well - this is for trasferring into a database if you wanted.
+			# 	p = profiles[nameHash][termHash] # for ease
+			# 	# calculate the iso date time format
+			# 	if p['term'] == 'winter':
+			# 		m = 1
+			# 	elif p['term'] == 'summer':
+			# 		m = 5
+			# 	else:
+			# 		m = 9
+			# 	isoDateTime = datetime(int(p['year']), m, 1).isoformat("T") + "+00:00"
+
+				# pString = [nameHash, termHash, p['classYear'], p['termNumber'], p['mapLocation']['lat'], p['mapLocation']['lng'], p['title'], p['employer'], p['employerUrl'], p['city'], p['province'], p['country'], p['industry'], p['description']]
+				# pfwriter.writerow(pString)
 
 		# End of infoArray in fileReader
 	# End of with statement for csv
 # End of file loop
 
-
-# Report some figures
 # Open result data file, write, Close
 pf = open('../data/coop-profiles.txt', 'w')
 pf.write(json.dumps(profiles))
 pf.close()
 
 # close the csv
-pfcsv.close()
+# pfcsv.close()
