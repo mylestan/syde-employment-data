@@ -1,5 +1,5 @@
 # imports
-import csv, hashlib, glob, config
+import csv, hashlib, glob
 import simplejson as json
 from urllib2 import urlopen, URLError
 from datetime import datetime
