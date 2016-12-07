@@ -2,6 +2,7 @@
 ########
 log.txt
 *.pyc
+*.csv
 
 # Compiled source #
 ###################
